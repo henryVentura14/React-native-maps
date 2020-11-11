@@ -1,21 +1,59 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState, useEffect } from 'react'
+import { Alert, Dimensions, StyleSheet, Text, View } from 'react-native'
+import MapView, { Marker } from 'react-native-maps'
+import * as Location from 'expo-location'
+import Constants from 'expo-constants'
 
-export default function App() {
+export default function App () {
+  const initialState = {
+    userLat: '',
+    userLng: '',
+    navGeoStatus: true,
+    lat: '',
+    lng: ''
+  }
+  const [location, setLocation] = useState({})
+
+  const searchLocation = async () => {
+    const { status } = await Location.requestPermissionsAsync()
+    if (status !== 'granted') {
+      return Alert.alert('No permissions')
+    } else {
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High
+      })
+      setLocation(location)
+    }
+  }
+  useEffect(() => {
+    searchLocation()
+  })
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <MapView style={styles.map} >
+        {location.coords
+        ?<Marker
+          coordinate={location.coords}
+          title="Title"
+          description="Description"
+        />
+        :null
+        }
+      </MapView>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
+  map: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'center',
-  },
-});
+    paddingTop: 22
+  }
+})
