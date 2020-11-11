@@ -1,53 +1,53 @@
 import React, { useState, useEffect } from 'react'
-import { Alert, Dimensions, StyleSheet, Text, View } from 'react-native'
-import MapView, { Marker } from 'react-native-maps'
-import * as Location from 'expo-location'
-import Constants from 'expo-constants'
+import { Button, StyleSheet, Text, View } from 'react-native'
+import { Camera } from 'expo-camera'
 
 export default function App () {
-  const initialState = {
-    userLat: '',
-    userLng: '',
-    navGeoStatus: true,
-    lat: '',
-    lng: ''
-  }
-  const [location, setLocation] = useState({})
+  const [permissions, setPermissions] = useState({})
+  const [typecamera, setTypecamera] = useState(Camera.Constants.Type.back)
 
-  const searchLocation = async () => {
-    const { status } = await Location.requestPermissionsAsync()
-    if (status !== 'granted') {
-      return Alert.alert('No permissions')
-    } else {
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High
-      })
-      setLocation(location)
-    }
+  const getPermissions = async () => {
+    const { status } = await Camera.requestPermissionsAsync()
+    setPermissions(status == 'granted')
+    console.log(status)
   }
+
   useEffect(() => {
-    searchLocation()
+    getPermissions()
   })
+  if (permissions === null) {
+    return (
+      <View>
+        <Text>WAITING</Text>
+      </View>
+    )
+  }
+  if (permissions === false) {
+    return (
+      <View>
+        <Text>No permissions =/</Text>
+      </View>
+    )
+  }
   return (
     <View style={styles.container}>
-      <MapView style={styles.map} >
-        {location.coords
-        ?<Marker
-          coordinate={location.coords}
-          title="Title"
-          description="Description"
-        />
-        :null
-        }
-      </MapView>
+      <Camera style={styles.comera} type={typecamera}>
+        <Button
+          title='Flip'
+          onPress={() => {
+            const { front, back } = Camera.Constants.Type
+            const newType = typecamera ? front : back
+            setTypecamera(newType)
+          }}
+        ></Button>
+      </Camera>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  map: {
-    width: Dimensions.get('window').width,
-    height: Dimensions.get('window').height
+  comera: {
+    flex: 1
   },
   container: {
     flex: 1,
