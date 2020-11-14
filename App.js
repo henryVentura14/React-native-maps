@@ -1,59 +1,81 @@
-import React, { useState, useEffect } from 'react'
-import { Button, StyleSheet, Text, View } from 'react-native'
-import { Camera } from 'expo-camera'
+import React, { useState } from 'react'
+import { StyleSheet, View, Button, Text } from 'react-native'
+import { Map, Modal, Panel, Input, List } from './components'
 
 export default function App () {
-  const [permissions, setPermissions] = useState({})
-  const [typecamera, setTypecamera] = useState(Camera.Constants.Type.back)
+  const [points, setPoints] = useState([])
+  const [pointstemps, setPointsTemps] = useState({})
+  const [name, setName] = useState('')
+  const [filter, setfilter] = useState('new_point')
+  const [visibility, setVIsibility] = useState(false)
+  const [pointsfilter, setPointsFilter] = useState(true)
 
-  const getPermissions = async () => {
-    const { status } = await Camera.requestPermissionsAsync()
-    setPermissions(status == 'granted')
-    console.log(status)
+  const togglePointerFilter = () => {
+    setPointsFilter(!pointsfilter)
   }
-
-  useEffect(() => {
-    getPermissions()
-  })
-  if (permissions === null) {
-    return (
-      <View>
-        <Text>WAITING</Text>
-      </View>
-    )
+  const handleLongPress = ({ nativeEvent }) => {
+    setPointsTemps(nativeEvent.coordinate)
+    setVIsibility(true)
+    setfilter('new_point')
   }
-  if (permissions === false) {
-    return (
-      <View>
-        <Text>No permissions =/</Text>
-      </View>
-    )
+  const handleChangeText = text => {
+    setName(text)
+  }
+  const handleSubmit = () => {
+    const newPoint = { coordinate: pointstemps, name: name }
+    setPoints(points.concat(newPoint))
+    setVIsibility(false)
+    setName('')
+  }
+  const handleList = () => {
+    setfilter('list')
+    setVIsibility(true)
+  }
+  const closeModal = () => {
+    setVIsibility(false)
   }
   return (
     <View style={styles.container}>
-      <Camera style={styles.comera} type={typecamera}>
-        <Button
-          title='Flip'
-          onPress={() => {
-            const { front, back } = Camera.Constants.Type
-            const newType = typecamera ? front : back
-            setTypecamera(newType)
-          }}
-        ></Button>
-      </Camera>
+      <Map
+        onLongPress={handleLongPress}
+        points={points}
+        pointsfilter={pointsfilter}
+      />
+      <Panel
+        onPressLeft={handleList}
+        textLeft='List'
+        togglePointerFilter={togglePointerFilter}
+      />
+      <Modal visibility={visibility}>
+        {filter === 'new_point' ? (
+          <View style={styles.form}>
+            <Input
+              title='Name'
+              placeholder='Point Name'
+              onChangeText={handleChangeText}
+            />
+            <Button
+              style={styles.button}
+              title='Accept'
+              onPress={handleSubmit}
+            />
+          </View>
+        ) : (
+          <List points={points} closeModal={closeModal} />
+        )}
+      </Modal>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  comera: {
-    flex: 1
-  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'stretch',
-    justifyContent: 'center',
-    paddingTop: 22
+    alignItems: 'center',
+    justifyContent: 'flex-start'
+  },
+  form: {
+    padding: 10
   }
 })
